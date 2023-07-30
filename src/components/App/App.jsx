@@ -1,14 +1,15 @@
+import css from './app.module.css';
 import { ContactForm } from '../ContactForm/ContactForm';
 import { Filter } from 'components/Filter/Filter';
 import { ContactList } from 'components/ContactList/ContactList';
-import { useState } from 'react';
-import useLocalStorage from '../hooks/LocaleStorage';
-import css from './app.module.css';
+import { useDispatch, useSelector } from 'react-redux';
+import { getFilters } from 'redux/filterSlice';
+import { addContact } from 'redux/contactsSlice';
 
 export const App = () => {
-  const [filter, setFilter] = useState('');
-  const [contacts, setContacts] = useLocalStorage('contacts', []);
-
+  const dispatch = useDispatch();
+  const contacts = useSelector(state => state.contacts.contacts);
+  const filterValue = useSelector(state => state.filters);
   const onContactFormSubmit = newContact => {
     if (
       contacts.some(
@@ -18,26 +19,19 @@ export const App = () => {
       alert(`${newContact.name} is already in contacts`);
       return;
     }
-
-    setContacts(prevState => [...prevState, newContact]);
-  };
-
-  const deleteContact = contactId => {
-    setContacts(prevState =>
-      prevState.filter(contact => contact.id !== contactId)
-    );
+    dispatch(addContact(newContact));
   };
 
   const changeFilter = e => {
-    setFilter(e.target.value);
+    dispatch(getFilters(e.target.value));
   };
 
   const getFilteredContact = () => {
-    const normilizeFilter = filter.toLocaleLowerCase();
     return contacts.filter(contact =>
-      contact.name.toLowerCase().includes(normilizeFilter)
+      contact.name.toLowerCase().includes(filterValue.toLowerCase())
     );
   };
+
   const filteredContact = getFilteredContact();
 
   return (
@@ -48,9 +42,8 @@ export const App = () => {
       </div>
       <div className={`${css.section} ${css.contactSection}`}>
         <h2>Contacts</h2>
-
-        <Filter value={filter} onChange={changeFilter} />
-        <ContactList contacts={filteredContact} onDelete={deleteContact} />
+        <Filter value={filterValue} onChange={changeFilter} />
+        <ContactList contacts={filteredContact} />
       </div>
     </div>
   );
