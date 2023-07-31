@@ -1,7 +1,10 @@
 import css from './ContactForm.module.css';
-import { nanoid } from 'nanoid';
-import { Formik, Form, Field, ErrorMessage, useFormik } from 'formik';
 import * as yup from 'yup';
+import { nanoid } from '@reduxjs/toolkit';
+import { Formik, Form, Field, ErrorMessage, useFormik } from 'formik';
+import { addContact } from 'redux/contactsSlice';
+import { useDispatch, useSelector } from 'react-redux';
+import { getContacts } from 'redux/selector';
 
 const Schema = yup.object().shape({
   name: yup
@@ -22,7 +25,7 @@ const Schema = yup.object().shape({
     ),
 });
 
-export const ContactForm = ({ onSubmit }) => {
+export const ContactForm = () => {
   const formik = useFormik({
     initialValues: {
       name: '',
@@ -30,14 +33,29 @@ export const ContactForm = ({ onSubmit }) => {
     },
   });
 
-  const handleSubmit = (values, { resetForm }) => {
-    const newContact = {
-      id: nanoid(),
-      name: values.name,
-      number: values.number,
-    };
+  const dispatch = useDispatch();
+  const contacts = useSelector(getContacts);
 
-    onSubmit(newContact);
+  const handleSubmit = (values, { resetForm }) => {
+    if (
+      contacts.some(
+        contact => contact.name.toLowerCase() === values.name.toLowerCase()
+      )
+    ) {
+      alert(`${values.name} is already in contacts`);
+      resetForm();
+
+      return;
+    }
+
+    dispatch(
+      addContact({
+        id: nanoid(),
+        name: values.name,
+        number: values.number,
+      })
+    );
+
     resetForm();
   };
 
